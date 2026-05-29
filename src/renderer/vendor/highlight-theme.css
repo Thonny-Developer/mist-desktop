@@ -1,0 +1,15 @@
+/* highlight.js token theme — tuned to the Mistral CLI palette
+   (muted amber keywords, sage strings, dim comments). */
+.hljs { color: #c7c7cd; background: transparent; }
+.hljs-comment, .hljs-quote { color: #4a4a50; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in, .hljs-name, .hljs-tag { color: #c98a3a; }
+.hljs-string, .hljs-attr, .hljs-regexp, .hljs-addition { color: #7f9a6e; }
+.hljs-number, .hljs-literal, .hljs-variable, .hljs-template-variable { color: #d09a6a; }
+.hljs-title, .hljs-section, .hljs-title.function_ { color: #d6b06a; }
+.hljs-type, .hljs-class .hljs-title { color: #b58a5a; }
+.hljs-attribute { color: #9aa0a6; }
+.hljs-symbol, .hljs-bullet, .hljs-link { color: #FF8205; }
+.hljs-meta { color: #6c6c73; }
+.hljs-deletion { color: #d66a5a; }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 700; }

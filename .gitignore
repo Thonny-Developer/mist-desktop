@@ -1,0 +1,7 @@
+node_modules/
+dist/
+electron-out.log
+# generated vendor bundle (rebuilt via `npm run build:vendor` on install)
+src/renderer/vendor/libs.js
+*.log
+.DS_Store

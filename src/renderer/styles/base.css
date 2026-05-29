@@ -1,0 +1,110 @@
+/* ============================================================
+   Mistral CLI — base.css
+   Design tokens, reset, typography. Ported 1:1 from the
+   wireframe kit (wf.css), with OLED / Dim theme overrides.
+   ============================================================ */
+
+:root {
+  --bg:          #0e0e10;
+  --canvas:      #161618;
+  --panel:       #161618;
+  --panel-2:     #1b1b1e;
+  --panel-3:     #202024;
+  --line:        #2a2a2e;
+  --line-2:      #35353b;
+  --line-strong: #45454c;
+
+  --ink:    #e7e7ea;
+  --ink-2:  #a0a0a7;
+  --ink-3:  #6c6c73;
+  --ink-4:  #4a4a50;
+
+  --skel:   #26262b;
+  --skel-2: #303036;
+
+  --accent:     #FF8205;
+  --accent-dim: #7a4710;
+  --ok:         #6fae6f;
+  --danger:     #d66a5a;
+
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --r: 4px;
+
+  /* runtime-adjustable */
+  --font-size: 14px;
+  --titlebar-h: 38px;
+}
+
+/* OLED — true black, deeper panels */
+:root[data-theme="oled"] {
+  --bg:      #000000;
+  --canvas:  #000000;
+  --panel:   #000000;
+  --panel-2: #0b0b0d;
+  --panel-3: #141417;
+  --line:    #1c1c20;
+}
+
+/* Dim — lifted, lower-contrast */
+:root[data-theme="dim"] {
+  --bg:      #17171a;
+  --canvas:  #1c1c20;
+  --panel:   #1c1c20;
+  --panel-2: #232327;
+  --panel-3: #2a2a2f;
+  --line:    #34343a;
+  --line-2:  #3f3f46;
+  --ink:     #ededf0;
+  --ink-2:   #b2b2b9;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: var(--font-size);
+  -webkit-font-smoothing: antialiased;
+  user-select: none; /* terminal-tool feel; inputs/messages re-enable below */
+}
+
+/* allow selection where it matters */
+input, textarea, .selectable, .msg-content, .code, pre, code, .editor-area {
+  user-select: text;
+}
+
+button { font-family: inherit; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* shared text helpers (from kit) */
+.mono   { font-family: var(--mono); }
+.lbl    { font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-4); }
+.txt    { color: var(--ink-2); }
+.txt-d  { color: var(--ink-3); }
+.txt-hi { color: var(--ink); }
+.acc    { color: var(--accent); }
+
+.row { display: flex; }
+.col { display: flex; flex-direction: column; }
+.spacer { flex: 1; }
+.hidden { display: none !important; }
+
+hr.hr { height: 1px; background: var(--line); border: 0; margin: 0; }
+
+/* custom scrollbars — thin, dark, theme-matched */
+.scroll { overflow-y: auto; }
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 10px; border: 2px solid var(--panel); }
+::-webkit-scrollbar-thumb:hover { background: var(--line-strong); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* focus ring for keyboard users */
+:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }

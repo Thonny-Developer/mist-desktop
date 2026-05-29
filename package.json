@@ -1,0 +1,29 @@
+{
+  "name": "mistral-cli-client",
+  "productName": "Mistral CLI",
+  "version": "1.4.0",
+  "description": "A dark, terminal-native desktop client for the Mistral AI API.",
+  "author": "Mistral CLI",
+  "license": "MIT",
+  "main": "src/main/main.js",
+  "scripts": {
+    "build:vendor": "esbuild src/renderer/vendor/libs.src.js --bundle --format=esm --outfile=src/renderer/vendor/libs.js",
+    "postinstall": "npm run build:vendor",
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "pack": "electron-builder --dir --config electron-builder.config.js",
+    "dist": "electron-builder --config electron-builder.config.js",
+    "dist:win": "electron-builder --win --config electron-builder.config.js"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.3.9",
+    "highlight.js": "^11.10.0",
+    "marked": "^12.0.2"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3",
+    "esbuild": "^0.23.1"
+  }
+}

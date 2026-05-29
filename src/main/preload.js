@@ -1,0 +1,84 @@
+'use strict';
+
+/**
+ * Context bridge — the ONLY surface the renderer can touch.
+ *
+ * Everything is funnelled through namespaced IPC channels:
+ *   store:*     persistent settings/history
+ *   apikey:*    secure API key (never exposes the encrypted blob)
+ *   mistral:*   streaming chat + connection test + model list
+ *   window:*    custom titlebar controls
+ *   session:*   export to disk
+ */
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('api', {
+  /* ---- persistent store ---- */
+  store: {
+    get: (key) => ipcRenderer.invoke('store:get', key),
+    set: (key, value) => ipcRenderer.invoke('store:set', key, value),
+    delete: (key) => ipcRenderer.invoke('store:delete', key)
+  },
+
+  /* ---- long-term memory (memory.md) ---- */
+  memory: {
+    get: () => ipcRenderer.invoke('memory:get'),
+    set: (content) => ipcRenderer.invoke('memory:set', content),
+    path: () => ipcRenderer.invoke('memory:path')
+  },
+
+  /* ---- agent working folder ---- */
+  workspace: {
+    get: () => ipcRenderer.invoke('workspace:get'),
+    pick: () => ipcRenderer.invoke('workspace:pick'),
+    clear: () => ipcRenderer.invoke('workspace:clear')
+  },
+
+  /* ---- agent todo list ---- */
+  todos: {
+    get: () => ipcRenderer.invoke('todos:get'),
+    toggle: (id) => ipcRenderer.invoke('todos:toggle', id),
+    clear: () => ipcRenderer.invoke('todos:clear')
+  },
+
+  /* ---- secure API key ---- */
+  apiKey: {
+    get: () => ipcRenderer.invoke('apikey:get'),
+    has: () => ipcRenderer.invoke('apikey:has'),
+    set: (key) => ipcRenderer.invoke('apikey:set', key),
+    isEncrypted: () => ipcRenderer.invoke('apikey:encrypted')
+  },
+
+  /* ---- Mistral API ---- */
+  mistral: {
+    // Fire a streaming request; deltas/done/error arrive via onStream().
+    send: (payload) => ipcRenderer.send('mistral:send', payload),
+    abort: () => ipcRenderer.send('mistral:abort'),
+    test: () => ipcRenderer.invoke('mistral:test'),
+    models: () => ipcRenderer.invoke('mistral:models'),
+    // Returns an unsubscribe fn so pages can clean up listeners.
+    onStream: (cb) => {
+      const handler = (_e, msg) => cb(msg);
+      ipcRenderer.on('mistral:stream', handler);
+      return () => ipcRenderer.removeListener('mistral:stream', handler);
+    }
+  },
+
+  /* ---- window controls (custom titlebar) ---- */
+  window: {
+    minimize: () => ipcRenderer.send('window:minimize'),
+    maximizeToggle: () => ipcRenderer.send('window:maximize'),
+    close: () => ipcRenderer.send('window:close'),
+    isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
+    onMaximizeChange: (cb) => {
+      const handler = (_e, val) => cb(val);
+      ipcRenderer.on('window:maximized', handler);
+      return () => ipcRenderer.removeListener('window:maximized', handler);
+    }
+  },
+
+  /* ---- export ---- */
+  session: {
+    export: (session, format) => ipcRenderer.invoke('session:export', { session, format })
+  }
+});

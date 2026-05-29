@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <!-- Lock the renderer down: no remote content, no inline-eval beyond our bundled modules. -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; script-src 'self';" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mistral CLI</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/layout.css" />
+  <link rel="stylesheet" href="styles/components.css" />
+  <!-- highlight.js theme; overridden by our muted-amber tokens where needed -->
+  <link rel="stylesheet" href="vendor/highlight-theme.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- ============ custom titlebar (drag region) ============ -->
+    <div class="titlebar" id="titlebar">
+      <div class="traffic"><i></i><i></i><i></i></div>
+      <span class="win-title">mistral cli — <b id="winTitle">Chat</b></span>
+      <span class="spacer"></span>
+      <span class="tb-hint mono">Ctrl+K</span>
+      <div class="win-controls">
+        <button class="win-ctl" id="winMin" title="Minimize" aria-label="Minimize">
+          <svg viewBox="0 0 12 12"><path d="M2 6h8" /></svg>
+        </button>
+        <button class="win-ctl" id="winMax" title="Maximize" aria-label="Maximize">
+          <svg viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7" /></svg>
+        </button>
+        <button class="win-ctl close" id="winClose" title="Close" aria-label="Close">
+          <svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6" /></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ============ body: nav rail + content ============ -->
+    <div class="body" id="body">
+      <!-- nav rail (rendered by app.js) -->
+      <nav class="nav" id="nav"></nav>
+      <!-- page mount point -->
+      <main class="content" id="content"></main>
+    </div>
+  </div>
+
+  <!-- toast + overlay hosts -->
+  <div class="toast-host" id="toastHost"></div>
+  <div id="overlayHost"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
