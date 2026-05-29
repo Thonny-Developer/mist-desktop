@@ -24,6 +24,7 @@ export const DEFAULT_SETTINGS = {
   theme: 'dark',
   fontSize: 14,
   collapseSidebar: false,
+  reasoningLevel: 'medium',
   activePresetId: 'general'
 };
 

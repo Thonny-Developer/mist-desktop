@@ -71,12 +71,19 @@ async function sendMessage({ messages, settings, apiKey, onToken, signal }) {
 
   const endpoint = settings.endpoint || DEFAULT_ENDPOINT;
   const stream = settings.stream !== false;
+  const qualityMode = settings.reasoningLevel || 'medium';
+  const QUALITY_SAMPLING = {
+    low: { temperature: 0.2, top_p: 0.5 },
+    medium: { temperature: 0.7, top_p: 0.9 },
+    high: { temperature: 0.4, top_p: 1 }
+  };
+  const qualitySettings = QUALITY_SAMPLING[qualityMode] || QUALITY_SAMPLING.medium;
 
   const body = {
-    model: settings.model || 'mistral-large-latest',
+    model: settings.model || 'codestral-latest',
     messages,
-    temperature: clampNum(settings.temperature, 0, 1.5, 0.7),
-    top_p: clampNum(settings.topP, 0, 1, 1),
+    temperature: clampNum(qualitySettings.temperature, 0, 1.5, 0.7),
+    top_p: clampNum(qualitySettings.top_p, 0, 1, 1),
     stream
   };
   // max_tokens is optional — only send a positive integer.

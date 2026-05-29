@@ -164,6 +164,16 @@ async function drawModel(pane, settings) {
         </div>
       </div>
 
+      <div class="setrow">
+        <div class="setlbl"><div class="l1">Reasoning</div><div class="l2">low = token-savvy · medium = balanced · high = detailed reasoning</div></div>
+        <div class="setctl" style="max-width:360px">
+          <div class="seg-group" id="reasoningLevel">
+            ${['low', 'medium', 'high'].map((v) =>
+              `<button class="seg ${settings.reasoningLevel === v ? 'active' : ''}" data-v="${v}">${v}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+
       <div class="setrow" id="tempRow">
         <div class="setlbl"><div class="l1">Temperature</div><div class="l2">Randomness · 0–1.5</div></div>
         <div class="setctl" style="max-width:300px"></div>
@@ -185,6 +195,10 @@ async function drawModel(pane, settings) {
   pane.querySelector('#model').addEventListener('change', async (e) => {
     await saveSettings({ model: e.target.value });
     toast('Model updated', 'success', 1600);
+  });
+  bindSeg(pane.querySelector('#reasoningLevel'), async (v) => {
+    await saveSettings({ reasoningLevel: v });
+    toast('Reasoning quality updated', 'success', 1600);
   });
   pane.querySelector('#maxTokens').addEventListener('change', async (e) => {
     const n = Math.max(0, parseInt(e.target.value, 10) || 0);

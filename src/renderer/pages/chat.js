@@ -45,6 +45,7 @@ async function persistConvo() {
   convo.savedId = record.id;
   convo.title = title;
   await store.set('sessions', sessions);
+  document.dispatchEvent(new Event('sessions-changed'));
 }
 
 /* ---------------- render ---------------- */
@@ -54,25 +55,21 @@ async function render(container, ctx) {
 
   // Handle navigation intents.
   if (ctx.params?.newChat) await newChat(false);
-  if (ctx.params?.openSession) await openSession(ctx.params.openSession, false);
+  if (ctx.params?.openSession) {
+    const openSessionParam = ctx.params.openSession;
+    if (typeof openSessionParam === 'string') {
+      const sessions = await loadSessions();
+      const session = sessions.find((s) => s.id === openSessionParam);
+      if (session) await openSession(session, false);
+    } else {
+      await openSession(openSessionParam, false);
+    }
+  }
 
   const preset = await activePreset(settings);
 
   container.innerHTML = `
     <div class="chat">
-      <!-- sessions column -->
-      <aside class="sessions">
-        <div class="sessions-head">
-          <span class="lbl">Sessions</span>
-          <div class="field-box searchbox">
-            <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M11 11l3 3"/></svg>
-            <input type="text" id="sesSearch" placeholder="Search…" />
-          </div>
-        </div>
-        <div class="sessions-list" id="sesList"></div>
-      </aside>
-
-      <!-- thread + composer -->
       <section class="thread-pane">
         <header class="thread-head">
           <span class="model mono" id="thModel">${escapeHtml(convo.model)}</span>
@@ -145,9 +142,6 @@ async function render(container, ctx) {
   document.addEventListener('keydown', onKey);
   chatPage._onKey = onKey;
 
-  // Session search.
-  container.querySelector('#sesSearch').addEventListener('input', (e) => drawSessions(e.target.value));
-
   // ---- working folder + todos chips ----
   const folderLabel = container.querySelector('#folderLabel');
   const todosLabel = container.querySelector('#todosLabel');
@@ -176,7 +170,6 @@ async function render(container, ctx) {
 
   // Initial paint.
   paintThread(thread);
-  await drawSessions('');
   await refreshFolder();
   await refreshTodos();
   updateTokens();
@@ -197,7 +190,6 @@ async function render(container, ctx) {
     paintThread(thread);
     forceScroll(thread);
     await persistConvo();
-    await drawSessions(container.querySelector('#sesSearch').value);
 
     // Build the message array (prepend system prompt if set).
     const preset = await activePreset(settings);
@@ -269,7 +261,6 @@ async function render(container, ctx) {
       updateTokens();
       paintThread(thread);
       persistConvo();
-      drawSessions(container.querySelector('#sesSearch').value);
       refreshTodos();
       if (aborted) toast('Generation stopped', 'info', 2000);
     }
@@ -303,41 +294,6 @@ async function render(container, ctx) {
     stopBtn.classList.toggle('hidden', !streaming);
   }
 
-  /* ---- sessions list ---- */
-  async function drawSessions(query) {
-    const list = container.querySelector('#sesList');
-    if (!list) return;
-    const sessions = await loadSessions();
-    const q = (query || '').toLowerCase();
-    const filtered = sessions.filter((s) => s.title.toLowerCase().includes(q));
-
-    if (!filtered.length) {
-      list.innerHTML = `<div class="empty" style="padding:30px 10px"><div class="sub">${q ? 'No matches.' : 'No sessions yet.\nStart chatting to build history.'}</div></div>`;
-      return;
-    }
-    const activeId = convo.savedId || convo.id;
-    list.innerHTML = filtered.map((s) => `
-      <div class="ses ${s.id === activeId ? 'active' : ''}" data-id="${s.id}">
-        <div class="ses-title">${escapeHtml(s.title || 'Untitled')}</div>
-        <div class="ses-meta">
-          <span class="when">${formatRelative(s.updatedAt)} · ${s.messageCount} msg</span>
-          <span class="chip">${escapeHtml((s.model || '').replace('-latest', '').replace('mistral-', '') || 'chat')}</span>
-        </div>
-      </div>`).join('');
-    list.querySelectorAll('.ses').forEach((el) =>
-      el.addEventListener('click', () => openSessionById(el.dataset.id)));
-  }
-
-  async function openSessionById(id) {
-    const sessions = await loadSessions();
-    const s = sessions.find((x) => x.id === id);
-    if (!s) return;
-    await openSession(s, true);
-    paintThread(thread);
-    await drawSessions(container.querySelector('#sesSearch').value);
-    updateTokens();
-    forceScroll(thread);
-  }
 }
 
 /* ---------------- thread painting ---------------- */

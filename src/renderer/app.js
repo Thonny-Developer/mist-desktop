@@ -1,6 +1,6 @@
 /* App shell: nav rail, router/page-manager, window controls,
  * global keyboard shortcuts, command palette, theme application. */
-import { getSettings, saveSettings, navSvg, toast } from './shared.js';
+import { getSettings, saveSettings, navSvg, toast, store, formatRelative, escapeHtml } from './shared.js';
 
 import chatPage from './pages/chat.js';
 import settingsPage from './pages/settings.js';
@@ -9,6 +9,32 @@ import systemPromptPage from './pages/system-prompt.js';
 import aboutPage from './pages/about.js';
 
 const api = window.api;
+
+async function loadSessions() {
+  return (await store.get('sessions')) || [];
+}
+
+async function drawNavSessions() {
+  const container = els.nav.querySelector('#navSessions');
+  if (!container) return;
+
+  const sessions = await loadSessions();
+  if (!sessions.length) {
+    container.innerHTML = `<div class="nav-sessions-empty">No chats yet</div>`;
+    return;
+  }
+
+  container.innerHTML = sessions.map((s) => `
+      <button class="nav-ses" type="button" data-id="${s.id}" title="${escapeHtml(s.title || 'Untitled')}">
+        <span class="nav-ses-title">${escapeHtml(s.title || 'Untitled')}</span>
+        <span class="nav-ses-meta">${formatRelative(s.updatedAt)} · ${Math.max(0, s.messageCount || 0)} msgs</span>
+      </button>`).join('');
+
+  container.querySelectorAll('.nav-ses').forEach((btn) =>
+    btn.addEventListener('click', () => navigate('chat', { openSession: btn.dataset.id })));
+}
+
+document.addEventListener('sessions-changed', () => drawNavSessions());
 
 const PAGES = {
   chat: { mod: chatPage, label: 'Chat' },
@@ -81,6 +107,7 @@ function renderNav() {
         <span class="name">mistral<span class="cli">cli</span></span>
       </div>
       <button class="btn primary nav-newchat" id="navNew"><span class="label">+ New Chat</span></button>
+      <div class="nav-sessions" id="navSessions"></div>
     </div>
     <div class="spacer"></div>
     <div class="nav-foot">
@@ -99,6 +126,7 @@ function renderNav() {
     e.stopPropagation();
     toggleNavMenu();
   });
+  drawNavSessions();
 }
 
 /* ---------------- bottom "Mist Desktop" popup menu ---------------- */

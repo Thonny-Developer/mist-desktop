@@ -18,14 +18,14 @@ const isDev = process.argv.includes('--dev');
  *  The API key is stored separately, encrypted with safeStorage when available.
  * ------------------------------------------------------------------ */
 const store = new Store({
-  name: 'mistral-cli',
+  name: 'mistral-desktop',
   defaults: {
     settings: {
       endpoint: mistral.DEFAULT_ENDPOINT,
-      model: 'mistral-large-latest',
+      model: 'codestral-latest',
       temperature: 0.7,
       topP: 1,
-      maxTokens: 0, // 0 = unset
+      maxTokens: 0, // 0 = unlimited
       stream: true,
       renderMarkdown: true,
       outputFormat: 'markdown',
@@ -36,8 +36,8 @@ const store = new Store({
     },
     sessions: [],
     presets: defaultPresets(),
-    workingDir: '',   // agent file-tool sandbox root
-    todos: [],        // agent todo list
+    workingDir: '',
+    todos: [],
     windowState: { width: 1180, height: 760, x: undefined, y: undefined, maximized: false }
   }
 });
@@ -130,11 +130,20 @@ const AGENT_INSTRUCTIONS = [
   '- All file paths are relative to the working folder; you cannot read or write outside it.',
   '- For multi-step work, plan with add_todo first and complete_todo each item as you finish it.',
   '- Save lasting, reusable facts about the user or project with remember. Never mention these mechanisms to the user.',
-  '- Keep narration brief; let the actions do the work.'
+  '- Keep narration brief; let the actions do the work.',
+  '- When you reason, wrap it in a collapsible block before the answer or actions, for example:\n<details><summary>Рассуждает</summary>Пользователь сказал ... он скорее всего хочет чтобы я ...</details>'
 ].join('\n');
 
+const REASONING_HINTS = {
+  low: 'Keep reasoning short and token-efficient. Use a minimal "Рассуждает" section and answer concisely.',
+  medium: 'Balance concise reasoning with a clear answer. Include a short reasoning section and then the response.',
+  high: 'Maximize quality and reasoning. Include a detailed "Рассуждает" section with user intent, assumptions, and plan before the answer.'
+};
+
 /** Build the full agent system message including live state. */
-function buildAgentSystem() {
+function buildAgentSystem(settings) {
+  const reasoningLevel = (settings && settings.reasoningLevel) || 'medium';
+  const reasoningHint = REASONING_HINTS[reasoningLevel] || REASONING_HINTS.medium;
   const mem = readMemory().trim();
   const work = store.get('workingDir') || '';
   const todos = store.get('todos') || [];
@@ -143,6 +152,9 @@ function buildAgentSystem() {
     : '(none)';
   return [
     AGENT_INSTRUCTIONS,
+    '',
+    `Reasoning mode: ${reasoningLevel}`,
+    reasoningHint,
     '',
     `Working folder: ${work || '(none — ask to set one with set_working_folder)'}`,
     '',
@@ -347,7 +359,7 @@ ipcMain.on('mistral:send', async (event, { messages }) => {
 
   // Prepend the agent system message (tools + live state) so the model always
   // knows what it can do and what the current context is.
-  const baseMessages = [{ role: 'system', content: buildAgentSystem() }, ...messages];
+  const baseMessages = [{ role: 'system', content: buildAgentSystem(settings) }, ...messages];
   const ctx = { store, getWindow: () => mainWindow, appendMemory };
 
   try {
