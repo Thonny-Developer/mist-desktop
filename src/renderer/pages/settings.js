@@ -1,6 +1,6 @@
 /* Settings page — two-pane (section list + form pane).
  * Everything persists to electron-store and applies immediately. */
-import { getSettings, saveSettings, toast, escapeHtml } from '../shared.js';
+import { getSettings, saveSettings, toast, escapeHtml, t, LANGUAGE_OPTIONS } from '../shared.js';
 import { SUPPORTED_MODELS, MODEL_GROUPS, MODEL_INFO } from '../models.js';
 
 const api = window.api;
@@ -29,14 +29,15 @@ let activeSection = 'api';
 
 async function render(container) {
   const settings = await getSettings();
+  const locale = settings.locale || 'ru';
 
   container.innerHTML = `
     <div class="settings">
       <aside class="set-nav">
-        <div class="set-nav-head"><span class="lbl">Settings</span></div>
+        <div class="set-nav-head"><span class="lbl">${t('Settings', locale)}</span></div>
         <div class="set-nav-items">
           ${SECTIONS.map(([k, label]) =>
-            `<button class="setnav ${k === activeSection ? 'active' : ''}" data-sec="${k}">${label}</button>`).join('')}
+            `<button class="setnav ${k === activeSection ? 'active' : ''}" data-sec="${k}">${t(label, locale)}</button>`).join('')}
         </div>
       </aside>
       <div class="set-pane scroll" id="setPane"></div>
@@ -62,45 +63,46 @@ function drawSection(pane, settings) {
 
 /* ---------------- API section ---------------- */
 async function drawApi(pane, settings) {
+  const locale = settings.locale || 'ru';
   const hasKey = await api.apiKey.has();
   const encrypted = await api.apiKey.isEncrypted();
 
   pane.innerHTML = `
     <div class="set-section">
-      <div class="set-h">API</div>
-      <div class="set-sub">Connection &amp; authentication</div>
+      <div class="set-h">${t('API', locale)}</div>
+      <div class="set-sub">${t('Connection & authentication', locale)}</div>
 
       <div class="setrow">
         <div class="setlbl">
-          <div class="l1">API key</div>
-          <div class="l2">${encrypted ? 'Encrypted in system keychain' : 'Stored locally'}</div>
+          <div class="l1">${t('API key', locale)}</div>
+          <div class="l2">${encrypted ? t('Encrypted in system keychain', locale) : t('Stored locally', locale)}</div>
         </div>
         <div class="setctl">
           <div style="display:flex;align-items:center;gap:8px">
             <input class="field-box" id="apiKey" style="flex:1" type="password"
-                   placeholder="${hasKey ? '••••••••••••••••  (saved)' : 'Paste your Mistral API key'}" />
-            <button class="icon-btn" id="revealKey" title="Show/hide">
+                   placeholder="${hasKey ? '••••••••••••••••  (saved)' : t('Paste your Mistral API key', locale)}" />
+            <button class="icon-btn" id="revealKey" title="${t('Show/hide', locale)}">
               <svg viewBox="0 0 16 16"><path d="M1 8s2.5-4.5 7-4.5S15 8 15 8s-2.5 4.5-7 4.5S1 8 1 8z"/><circle cx="8" cy="8" r="1.8"/></svg>
             </button>
           </div>
           <div style="margin-top:10px;display:flex;gap:10px">
-            <button class="btn primary sm" id="saveKey">Save key</button>
-            ${hasKey ? '<button class="btn ghost sm danger" id="clearKey">Remove</button>' : ''}
+            <button class="btn primary sm" id="saveKey">${t('Save key', locale)}</button>
+            ${hasKey ? `<button class="btn ghost sm danger" id="clearKey">${t('Remove', locale)}</button>` : ''}
           </div>
         </div>
       </div>
 
       <div class="setrow">
-        <div class="setlbl"><div class="l1">Endpoint URL</div></div>
+        <div class="setlbl"><div class="l1">${t('Endpoint URL', locale)}</div></div>
         <div class="setctl">
           <input class="field" id="endpoint" type="text" value="${escapeHtml(settings.endpoint)}" />
         </div>
       </div>
 
       <div class="setrow">
-        <div class="setlbl"><div class="l1">Connection</div></div>
+        <div class="setlbl"><div class="l1">${t('Connection', locale)}</div></div>
         <div class="setctl wide" style="display:flex;align-items:center;gap:14px">
-          <button class="btn" id="testBtn">Test connection</button>
+          <button class="btn" id="testBtn">${t('Test connection', locale)}</button>
           <span id="testResult"></span>
         </div>
       </div>
@@ -117,19 +119,19 @@ async function drawApi(pane, settings) {
     await api.apiKey.set(val);
     keyInput.value = '';
     keyInput.type = 'password';
-    toast('API key saved', 'success');
+    toast(t('API key saved', locale), 'success');
     drawApi(pane, settings);
   });
   pane.querySelector('#clearKey')?.addEventListener('click', async () => {
     await api.apiKey.set('');
-    toast('API key removed', 'info');
+    toast(t('API key removed', locale), 'info');
     drawApi(pane, settings);
   });
 
   const endpoint = pane.querySelector('#endpoint');
   endpoint.addEventListener('change', async () => {
     const val = endpoint.value.trim();
-    if (!/^https?:\/\//.test(val)) { endpoint.classList.add('invalid'); toast('Endpoint must be a valid URL', 'error'); return; }
+    if (!/^https?:\/\//.test(val)) { endpoint.classList.add('invalid'); toast(t('Endpoint must be a valid URL', locale), 'error'); return; }
     endpoint.classList.remove('invalid');
     await saveSettings({ endpoint: val });
     settings.endpoint = val;
@@ -137,12 +139,12 @@ async function drawApi(pane, settings) {
 
   pane.querySelector('#testBtn').addEventListener('click', async () => {
     const result = pane.querySelector('#testResult');
-    result.innerHTML = `<span class="streaming"><span class="pulse"></span>testing…</span>`;
+    result.innerHTML = `<span class="streaming"><span class="pulse"></span>${t('testing…', locale)}</span>`;
     try {
       const { latency } = await api.mistral.test();
-      result.innerHTML = `<span class="streaming ok"><span class="pulse"></span>connected · ${latency}ms</span>`;
+      result.innerHTML = `<span class="streaming ok"><span class="pulse"></span>${t('connected · %sms', locale).replace('%s', latency)}</span>`;
     } catch (e) {
-      result.innerHTML = `<span class="streaming err"><span class="pulse"></span>${escapeHtml(e.message || 'failed')}</span>`;
+      result.innerHTML = `<span class="streaming err"><span class="pulse"></span>${escapeHtml(e.message || t('failed', locale))}</span>`;
     }
   });
 }
@@ -161,13 +163,14 @@ function modelOptions(current) {
 }
 
 async function drawModel(pane, settings) {
+  const locale = settings.locale || 'ru';
   pane.innerHTML = `
     <div class="set-section">
-      <div class="set-h">Model</div>
-      <div class="set-sub">Sampling &amp; limits</div>
+      <div class="set-h">${t('Model', locale)}</div>
+      <div class="set-sub">${t('Sampling & limits', locale)}</div>
 
       <div class="setrow">
-        <div class="setlbl"><div class="l1">Model</div><div class="l2" id="modelCtx">${escapeHtml((MODEL_INFO[settings.model] || {}).context || '')}</div></div>
+        <div class="setlbl"><div class="l1">${t('Model', locale)}</div><div class="l2" id="modelCtx">${escapeHtml((MODEL_INFO[settings.model] || {}).context || '')}</div></div>
         <div class="setctl" style="max-width:300px">
           <select class="field-box" id="model" style="width:100%">
             ${modelOptions(settings.model)}
@@ -176,7 +179,7 @@ async function drawModel(pane, settings) {
       </div>
 
       <div class="setrow">
-        <div class="setlbl"><div class="l1">Reasoning</div><div class="l2">low = token-savvy · medium = balanced · high = detailed reasoning</div></div>
+        <div class="setlbl"><div class="l1">${t('Reasoning', locale)}</div><div class="l2">${t('low = token-savvy · medium = balanced · high = detailed reasoning', locale)}</div></div>
         <div class="setctl" style="max-width:360px">
           <div class="seg-group" id="reasoningLevel">
             ${['low', 'medium', 'high'].map((v) =>
@@ -230,24 +233,25 @@ async function drawModel(pane, settings) {
 
 /* ---------------- Output section ---------------- */
 async function drawOutput(pane, settings) {
+  const locale = settings.locale || 'ru';
   pane.innerHTML = `
     <div class="set-section">
-      <div class="set-h">Output</div>
-      <div class="set-sub">How responses are produced &amp; displayed</div>
+      <div class="set-h">${t('Output', locale)}</div>
+      <div class="set-sub">${t('How responses are produced & displayed', locale)}</div>
 
       <div class="setrow">
-        <div class="setlbl"><div class="l1">Stream responses</div><div class="l2">Render tokens as they arrive</div></div>
+        <div class="setlbl"><div class="l1">${t('Stream responses', locale)}</div><div class="l2">${t('Render tokens as they arrive', locale)}</div></div>
         <div class="toggle ${settings.stream ? 'on' : ''}" id="tgStream"></div>
       </div>
       <div class="setrow">
-        <div class="setlbl"><div class="l1">Render markdown</div></div>
+        <div class="setlbl"><div class="l1">${t('Render markdown', locale)}</div></div>
         <div class="toggle ${settings.renderMarkdown ? 'on' : ''}" id="tgMd"></div>
       </div>
       <div class="setrow">
-        <div class="setlbl"><div class="l1">Output format</div></div>
+        <div class="setlbl"><div class="l1">${t('Output format', locale)}</div></div>
         <div class="seg-group" id="fmt">
           ${['markdown', 'plain', 'json'].map((f) =>
-            `<button class="seg ${settings.outputFormat === f ? 'active' : ''}" data-v="${f}">${f}</button>`).join('')}
+            `<button class="seg ${settings.outputFormat === f ? 'active' : ''}" data-v="${f}">${t(f, locale)}</button>`).join('')}
         </div>
       </div>
     </div>`;
@@ -258,21 +262,22 @@ async function drawOutput(pane, settings) {
 }
 
 /* ---------------- Memory section ---------------- */
-async function drawMemory(pane) {
+async function drawMemory(pane, settings) {
+  const locale = settings.locale || 'ru';
   const content = await api.memory.get();
   const filePath = await api.memory.path();
 
   pane.innerHTML = `
     <div class="set-section">
-      <div class="set-h">Memory</div>
-      <div class="set-sub">Durable facts the assistant remembers across chats. It appends here automatically; edit freely.</div>
+      <div class="set-h">${t('Memory', locale)}</div>
+      <div class="set-sub">${t('Durable facts the assistant remembers across chats. It appends here automatically; edit freely.', locale)}</div>
 
       <textarea class="field-box" id="memArea"
         style="width:100%;min-height:300px;resize:vertical;line-height:1.7;white-space:pre"></textarea>
 
       <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
-        <button class="btn primary sm" id="memSave">Save memory</button>
-        <button class="btn ghost sm danger" id="memClear">Clear</button>
+        <button class="btn primary sm" id="memSave">${t('Save memory', locale)}</button>
+        <button class="btn ghost sm danger" id="memClear">${t('Clear', locale)}</button>
         <span class="spacer"></span>
         <span class="meta mono" id="memMeta" style="font-size:11px;color:var(--ink-3)"></span>
       </div>
@@ -283,48 +288,62 @@ async function drawMemory(pane) {
   const meta = pane.querySelector('#memMeta');
   area.value = content || '';
 
-  const updateMeta = () => { meta.textContent = `${area.value.length.toLocaleString()} chars`; };
+  const updateMeta = () => { meta.textContent = `${area.value.length.toLocaleString()} ${t('chars', locale)}`; };
   area.addEventListener('input', updateMeta);
   updateMeta();
 
   pane.querySelector('#memSave').addEventListener('click', async () => {
     await api.memory.set(area.value);
-    toast('Memory saved', 'success', 1600);
+    toast(t('Memory saved', locale), 'success', 1600);
   });
   pane.querySelector('#memClear').addEventListener('click', async () => {
     area.value = '';
     updateMeta();
     await api.memory.set('');
-    toast('Memory cleared', 'info', 1600);
+    toast(t('Memory cleared', locale), 'info', 1600);
   });
 }
 
 /* ---------------- Interface section ---------------- */
 async function drawInterface(pane, settings) {
+  const locale = settings.locale || 'ru';
   pane.innerHTML = `
     <div class="set-section">
-      <div class="set-h">Interface</div>
-      <div class="set-sub">Appearance &amp; layout</div>
+      <div class="set-h">${t('Interface', locale)}</div>
+      <div class="set-sub">${t('Appearance & layout', locale)}</div>
 
       <div class="setrow">
-        <div class="setlbl"><div class="l1">Theme</div><div class="l2">Applies immediately</div></div>
+        <div class="setlbl"><div class="l1">${t('Theme', locale)}</div><div class="l2">${t('Applies immediately', locale)}</div></div>
         <div class="seg-group" id="theme">
-          ${[['dark', 'Dark'], ['oled', 'OLED'], ['dim', 'Dim']].map(([v, l]) =>
+          ${[['dark', t('Dark', locale)], ['oled', 'OLED'], ['dim', t('Dim', locale)]].map(([v, l]) =>
             `<button class="seg ${settings.theme === v ? 'active' : ''}" data-v="${v}">${l}</button>`).join('')}
         </div>
       </div>
+      <div class="setrow">
+        <div class="setlbl"><div class="l1">${t('Language', locale)}</div><div class="l2">${t('App interface language', locale)}</div></div>
+        <div class="setctl" style="max-width:260px">
+          <select class="field-box" id="language" style="width:100%">
+            ${LANGUAGE_OPTIONS.map((opt) => `<option value="${opt.id}" ${settings.locale === opt.id ? 'selected' : ''}>${escapeHtml(opt.label)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
       <div class="setrow" id="fsRow">
-        <div class="setlbl"><div class="l1">Font size</div></div>
+        <div class="setlbl"><div class="l1">${t('Font size', locale)}</div></div>
         <div class="setctl" style="max-width:260px"></div>
       </div>
       <div class="setrow">
-        <div class="setlbl"><div class="l1">Collapse sidebar by default</div></div>
+        <div class="setlbl"><div class="l1">${t('Collapse sidebar', locale)}</div></div>
         <div class="toggle ${settings.collapseSidebar ? 'on' : ''}" id="tgCollapse"></div>
       </div>
     </div>`;
 
   bindSeg(pane.querySelector('#theme'), async (v) => {
     await saveSettings({ theme: v });
+    window.dispatchEvent(new Event('settings-changed'));
+  });
+  const langSelect = pane.querySelector('#language');
+  langSelect.addEventListener('change', async (e) => {
+    await saveSettings({ locale: e.target.value });
     window.dispatchEvent(new Event('settings-changed'));
   });
   bindToggle(pane.querySelector('#tgCollapse'), settings.collapseSidebar, async (v) => {
@@ -337,13 +356,14 @@ async function drawInterface(pane, settings) {
 }
 
 /* ---------------- Shortcuts section ---------------- */
-function drawShortcuts(pane) {
+function drawShortcuts(pane, settings) {
+  const locale = settings.locale || 'ru';
   pane.innerHTML = `
     <div class="set-section">
-      <div class="set-h">Shortcuts</div>
-      <div class="set-sub">Keyboard reference</div>
+      <div class="set-h">${t('Shortcuts', locale)}</div>
+      <div class="set-sub">${t('Keyboard reference', locale)}</div>
       ${SHORTCUTS.map(([label, key]) =>
-        `<div class="kbrow"><span>${label}</span><span class="k mono">${key}</span></div>`).join('')}
+        `<div class="kbrow"><span>${t(label, locale)}</span><span class="k mono">${key}</span></div>`).join('')}
     </div>`;
 }
 

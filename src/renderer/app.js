@@ -1,6 +1,6 @@
 /* App shell: nav rail, router/page-manager, window controls,
  * global keyboard shortcuts, command palette, theme application. */
-import { getSettings, saveSettings, navSvg, toast, store, formatRelative, escapeHtml } from './shared.js';
+import { getSettings, saveSettings, navSvg, toast, store, formatRelative, escapeHtml, t, getLocale, localeLabel, LANGUAGE_OPTIONS } from './shared.js';
 
 import chatPage from './pages/chat.js';
 import settingsPage from './pages/settings.js';
@@ -20,14 +20,14 @@ async function drawNavSessions() {
 
   const sessions = await loadSessions();
   if (!sessions.length) {
-    container.innerHTML = `<div class="nav-sessions-empty">No chats yet</div>`;
+    container.innerHTML = `<div class="nav-sessions-empty">${t('No chats yet', locale)}</div>`;
     return;
   }
 
   container.innerHTML = sessions.map((s) => `
-      <button class="nav-ses" type="button" data-id="${s.id}" title="${escapeHtml(s.title || 'Untitled')}">
-        <span class="nav-ses-title">${escapeHtml(s.title || 'Untitled')}</span>
-        <span class="nav-ses-meta">${formatRelative(s.updatedAt)} · ${Math.max(0, s.messageCount || 0)} msgs</span>
+      <button class="nav-ses" type="button" data-id="${s.id}" title="${escapeHtml(s.title || t('Untitled', locale))}">
+        <span class="nav-ses-title">${escapeHtml(s.title || t('Untitled', locale))}</span>
+        <span class="nav-ses-meta">${formatRelative(s.updatedAt)} · ${Math.max(0, s.messageCount || 0)} ${t('msgs', locale)}</span>
       </button>`).join('');
 
   container.querySelectorAll('.nav-ses').forEach((btn) =>
@@ -37,11 +37,11 @@ async function drawNavSessions() {
 document.addEventListener('sessions-changed', () => drawNavSessions());
 
 const PAGES = {
-  chat: { mod: chatPage, label: 'Chat' },
-  settings: { mod: settingsPage, label: 'Settings' },
-  history: { mod: historyPage, label: 'History' },
-  prompt: { mod: systemPromptPage, label: 'System Prompt' },
-  about: { mod: aboutPage, label: 'About' }
+  chat: { mod: chatPage, labelKey: 'Chat' },
+  settings: { mod: settingsPage, labelKey: 'Settings' },
+  history: { mod: historyPage, labelKey: 'History' },
+  prompt: { mod: systemPromptPage, labelKey: 'System Prompt' },
+  about: { mod: aboutPage, labelKey: 'About' }
 };
 
 const els = {
@@ -53,6 +53,12 @@ const els = {
 
 let current = null;       // { name, instance }
 let settings = null;      // cached settings
+let locale = 'ru';
+
+async function refreshLocale() {
+  locale = await getLocale();
+  return locale;
+}
 
 /* ---------------- routing ---------------- */
 async function navigate(name, params = {}) {
@@ -73,14 +79,14 @@ async function navigate(name, params = {}) {
 
   const ctx = { navigate, getSettings, refreshNav: renderNav, openPalette, toggleSidebar };
   current = { name, instance: page.mod };
-  els.winTitle.textContent = page.label;
+  els.winTitle.textContent = t(page.labelKey, locale);
   setActiveNav(name);
 
   try {
     await page.mod.render(mount, { ...ctx, params });
   } catch (e) {
     console.error(e);
-    mount.innerHTML = `<div class="empty"><div class="title">Something went wrong</div><div class="sub">${e.message}</div></div>`;
+    mount.innerHTML = `<div class="empty"><div class="title">${t('Something went wrong', locale)}</div><div class="sub">${e.message}</div></div>`;
   }
 }
 
@@ -103,17 +109,17 @@ function renderNav() {
   els.nav.innerHTML = `
     <div class="nav-head">
       <div class="nav-brand">
-        <span class="name">✦ Mistral<span class="cli">Desktop</span></span>
+        <span class="name">✦ ${t('Mistral Desktop', locale)}</span>
       </div>
-      <button class="btn primary nav-newchat" id="navNew"><span class="label">+ New Chat</span></button>
+      <button class="btn primary nav-newchat" id="navNew"><span class="label">+ ${t('New chat', locale)}</span></button>
       <div class="nav-sessions" id="navSessions"></div>
     </div>
     <div class="spacer"></div>
     <div class="nav-foot">
-      <button class="nav-menu-trigger" id="navMenu" title="Menu">
+      <button class="nav-menu-trigger" id="navMenu" title="${t('Menu', locale)}">
         <div class="meta">
-          <div class="l1">Mistral Desktop</div>
-          <div class="l2">menu</div>
+          <div class="l1">${t('Mistral Desktop', locale)}</div>
+          <div class="l2">${t('Menu', locale).toLowerCase()}</div>
         </div>
         <svg class="caret" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 10l4-4 4 4"/></svg>
       </button>
@@ -141,8 +147,8 @@ function toggleNavMenu() {
 
   const pop = document.createElement('div');
   pop.className = 'nav-menu-pop';
-  pop.innerHTML = MENU_ITEMS.map(([k, label]) =>
-    `<button class="nav-menu-item ${current?.name === k ? 'active' : ''}" data-page="${k}">${navSvg(k)}<span>${label}</span></button>`
+  pop.innerHTML = MENU_ITEMS.map(([k, labelKey]) =>
+    `<button class="nav-menu-item ${current?.name === k ? 'active' : ''}" data-page="${k}">${navSvg(k)}<span>${t(labelKey, locale)}</span></button>`
   ).join('');
   els.nav.querySelector('.nav-foot').appendChild(pop);
 
@@ -160,6 +166,80 @@ function startNewChat() {
 function toggleSidebar(force) {
   const collapsed = typeof force === 'boolean' ? force : !els.body.classList.contains('collapsed');
   els.body.classList.toggle('collapsed', collapsed);
+}
+
+async function showFirstRunDialog() {
+  const firstRunDone = await store.get('firstRunCompleted');
+  if (firstRunDone) return;
+
+  const settings = await getSettings();
+  let selectedLang = settings.locale || locale;
+  const host = document.getElementById('overlayHost');
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3>${t('Welcome to Mistral Desktop', selectedLang)}</h3>
+      <p>${t('Choose your language and paste your API key to start.', selectedLang)}</p>
+      <div class="setrow">
+        <div class="setlbl"><div class="l1">${t('Language', selectedLang)}</div></div>
+        <div class="setctl" style="display:flex;gap:10px;flex-wrap:wrap">
+          ${LANGUAGE_OPTIONS.map((opt) => `
+            <button class="btn ${opt.id === selectedLang ? 'primary' : 'ghost'} sm lang-btn" data-lang="${opt.id}">${escapeHtml(opt.label)}</button>
+          `).join('')}
+        </div>
+      </div>
+      <div class="setrow" style="margin-top:16px">
+        <div class="setlbl"><div class="l1">${t('API key', selectedLang)}</div></div>
+        <div class="setctl"><input class="field-box" id="firstRunKey" type="password" placeholder="${t('Paste your Mistral API key', selectedLang)}" style="width:100%" /></div>
+      </div>
+      <div class="actions" style="justify-content:flex-end;margin-top:18px">
+        <button class="btn ghost sm" id="skipFirstRun">${t('Continue without key', selectedLang)}</button>
+        <button class="btn primary sm" id="saveFirstRun">${t('Save', selectedLang)}</button>
+      </div>
+    </div>`;
+  host.appendChild(overlay);
+
+  const setActiveLanguage = (lang) => {
+    selectedLang = lang;
+    overlay.querySelectorAll('.lang-btn').forEach((btn) => {
+      btn.classList.toggle('primary', btn.dataset.lang === lang);
+      btn.classList.toggle('ghost', btn.dataset.lang !== lang);
+    });
+    overlay.querySelector('h3').textContent = t('Welcome to Mistral Desktop', selectedLang);
+    overlay.querySelector('p').textContent = t('Choose your language and paste your API key to start.', selectedLang);
+    overlay.querySelector('#saveFirstRun').textContent = t('Save', selectedLang);
+    overlay.querySelector('#skipFirstRun').textContent = t('Continue without key', selectedLang);
+  };
+
+  overlay.querySelectorAll('.lang-btn').forEach((btn) => {
+    btn.addEventListener('click', () => setActiveLanguage(btn.dataset.lang));
+  });
+
+  const close = async () => {
+    overlay.remove();
+    await store.set('firstRunCompleted', true);
+    await saveSettings({ locale: selectedLang });
+    locale = selectedLang;
+    renderNav();
+  };
+
+  overlay.querySelector('#saveFirstRun').addEventListener('click', async () => {
+    const keyInput = overlay.querySelector('#firstRunKey');
+    const key = keyInput.value.trim();
+    if (key) {
+      await api.apiKey.set(key);
+      toast(t('API key saved', selectedLang), 'success');
+    } else {
+      toast(t('Continue without key', selectedLang), 'info', 3000);
+    }
+    await close();
+  });
+
+  overlay.querySelector('#skipFirstRun').addEventListener('click', async () => {
+    toast(t('Continue without key', selectedLang), 'info', 3000);
+    await close();
+  });
 }
 
 /* ---------------- theme + window state ---------------- */
@@ -181,13 +261,15 @@ function wireWindowControls() {
 }
 
 /* ---------------- command palette (Ctrl+K) ---------------- */
-const PALETTE_CMDS = [
-  { label: '＋ New chat', key: 'Ctrl+N', run: () => startNewChat() },
-  { label: '⎘ Open history', key: 'Ctrl+H', run: () => navigate('history') },
-  { label: '✎ Edit system prompt', key: 'Ctrl+P', run: () => navigate('prompt') },
-  { label: '⚙ Settings', key: 'Ctrl+,', run: () => navigate('settings') },
-  { label: 'ⓘ About', key: '', run: () => navigate('about') }
-];
+function paletteCommands() {
+  return [
+    { label: `＋ ${t('New chat', locale)}`, key: 'Ctrl+N', run: () => startNewChat() },
+    { label: `⎘ ${t('Open', locale)} ${t('History', locale)}`, key: 'Ctrl+H', run: () => navigate('history') },
+    { label: `✎ ${t('Edit system prompt', locale)}`, key: 'Ctrl+P', run: () => navigate('prompt') },
+    { label: `⚙ ${t('Settings', locale)}`, key: 'Ctrl+,', run: () => navigate('settings') },
+    { label: `ⓘ ${t('About', locale)}`, key: '', run: () => navigate('about') }
+  ];
+}
 
 let paletteEl = null;
 function openPalette() {
@@ -199,7 +281,7 @@ function openPalette() {
     <div class="palette" role="dialog" aria-modal="true">
       <div class="palette-input">
         <span class="prompt">›</span>
-        <input type="text" placeholder="Type a command…" autofocus />
+        <input type="text" placeholder="${t('Type a command…', locale)}" autofocus />
       </div>
       <div class="palette-list"></div>
     </div>`;
@@ -208,12 +290,12 @@ function openPalette() {
   const input = paletteEl.querySelector('input');
   const list = paletteEl.querySelector('.palette-list');
   let active = 0;
-  let filtered = PALETTE_CMDS.slice();
+  let filtered = paletteCommands().slice();
 
   const draw = () => {
     list.innerHTML = filtered.map((c, i) =>
       `<div class="pcmd ${i === active ? 'active' : ''}" data-i="${i}">${c.label}<span class="key mono">${c.key}</span></div>`
-    ).join('') || `<div class="pcmd">No matching commands</div>`;
+    ).join('') || `<div class="pcmd">${t('No matching commands', locale)}</div>`;
     list.querySelectorAll('.pcmd[data-i]').forEach((el) => {
       el.addEventListener('click', () => choose(parseInt(el.dataset.i, 10)));
       el.addEventListener('mousemove', () => { active = parseInt(el.dataset.i, 10); paint(); });
@@ -225,7 +307,7 @@ function openPalette() {
 
   input.addEventListener('input', () => {
     const q = input.value.toLowerCase();
-    filtered = PALETTE_CMDS.filter((c) => c.label.toLowerCase().includes(q));
+    filtered = paletteCommands().filter((c) => c.label.toLowerCase().includes(q));
     active = 0; draw();
   });
   input.addEventListener('keydown', (e) => {
@@ -279,15 +361,18 @@ function focusComposer() {
 
 /* ---------------- boot ---------------- */
 async function boot() {
+  await refreshLocale();
   await applyTheme();
   renderNav();
   wireWindowControls();
   wireShortcuts();
 
+  await showFirstRunDialog();
+
   // Warn (once) if no API key is configured yet.
   const hasKey = await api.apiKey.has();
   if (!hasKey) {
-    setTimeout(() => toast('No API key set — open Settings to connect to Mistral.', 'info', 6000), 600);
+    setTimeout(() => toast(t('No API key set — open Settings to connect to Mistral.', locale), 'info', 6000), 600);
   }
 
   navigate('chat');

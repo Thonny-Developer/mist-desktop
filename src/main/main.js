@@ -36,8 +36,10 @@ const store = new Store({
       collapseSidebar: false,
       reasoningLevel: 'medium',
       aiPermissionMode: 'default',
-      activePresetId: 'general'
+      activePresetId: 'general',
+      locale: 'ru'
     },
+    firstRunCompleted: false,
     sessions: [],
     presets: defaultPresets(),
     workingDir: '',
