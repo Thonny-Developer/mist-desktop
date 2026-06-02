@@ -1,8 +1,8 @@
 {
-  "name": "mistral-cli-client",
-  "productName": "Mistral CLI",
+  "name": "mistral-desktop",
+  "productName": "Mistral Desktop",
   "version": "1.4.0",
-  "description": "A dark, terminal-native desktop client for the Mistral AI API.",
+  "description": "Desktop application for Mistral, the open-source LLM by Thonny Developer",
   "author": {
     "name": "thonny_dev",
     "email": "thonnydev@gmail.com"
