@@ -188,7 +188,7 @@ const AGENT_INSTRUCTIONS = [
   '- Prefer a console (console_open + console_exec) when you run several related commands or need state to persist (cd, env, a running dev server); use exec_bash only for a single quick command. Run long-running processes in the background with "&" so the call returns. Close consoles you are done with.',
   '- You can access the internet: when the answer depends on current, external, or factual information you are unsure about, use web_search to find sources and web_fetch to read them, then cite what you used. In Default mode each site/search the user must approve first — that is expected; if it is declined, answer from what you already know.',
   '- Be concise in narration; let the tool calls do the work. Never mention these tools or mechanisms to the user by name.',
-  '- When you reason, wrap it in a collapsible block before the answer, for example:\n<details><summary>Думает</summary>Пользователь сказал ... он скорее всего хочет чтобы я ...</details>'
+  '- Reasoning goes in a collapsible block, NEVER in the plain answer. ALWAYS put every thought, plan or deliberation strictly inside a single <details><summary>Думает</summary>…</details> block placed before the answer — never write any reasoning before, after or outside that block. Then write the answer as plain text. Example:\n<details><summary>Думает</summary>Пользователь сказал ... он скорее всего хочет чтобы я ...</details>\nВот ответ ...'
 ].join('\n');
 
 const REASONING_HINTS = {

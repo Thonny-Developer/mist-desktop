@@ -55,6 +55,51 @@ function contentToText(content) {
   return String(content);
 }
 
+// The reasoning ("magistral") family returns its thought process as structured
+// `{type:'thinking'}` content chunks, separate from the `{type:'text'}` answer.
+// We wrap that thinking stream in a collapsible block right here so the
+// reasoning is ALWAYS captured in the foldable "Думает" panel — never leaked
+// into the plain answer — regardless of whether the model also emits the HTML
+// the system prompt asks non-reasoning models for. The plain `<details>` tag
+// (no attributes) matches what the renderer expects: it manages the `open`
+// state and bakes in the measured duration itself.
+const THINK_OPEN = '<details><summary>Думает</summary>';
+const THINK_CLOSE = '</details>';
+
+/** Walk a content value into ordered chunks, each tagged thinking-or-not. */
+function* contentChunks(content) {
+  if (content == null) return;
+  if (typeof content === 'string') { yield { thinking: false, text: content }; return; }
+  if (Array.isArray(content)) { for (const c of content) yield* contentChunks(c); return; }
+  if (typeof content === 'object') {
+    const thinking = typeof content.thinking !== 'undefined';
+    yield { thinking, text: thinking ? contentToText(content.thinking) : contentToText(content) };
+  }
+}
+
+/**
+ * Stateful flattener: turns a stream of content deltas into text, wrapping any
+ * `thinking` chunks in a `<details>` block. The "are we inside a thinking block"
+ * flag is kept across deltas, so the block opens on the first thinking chunk and
+ * closes the instant the answer text starts. `flush()` closes a block left open
+ * if the stream ends (or is aborted) mid-thought.
+ */
+function createReasoningFlattener() {
+  let inThink = false;
+  return {
+    push(content) {
+      let out = '';
+      for (const { thinking, text } of contentChunks(content)) {
+        if (thinking && !inThink) { out += THINK_OPEN; inThink = true; }
+        else if (!thinking && inThink) { out += THINK_CLOSE; inThink = false; }
+        out += text;
+      }
+      return out;
+    },
+    flush() { const out = inThink ? THINK_CLOSE : ''; inThink = false; return out; }
+  };
+}
+
 /** Build a tagged error so the renderer can branch on `.code`. */
 function apiError(message, code) {
   const err = new Error(message);
@@ -245,7 +290,8 @@ async function sendMessage({ messages, settings, apiKey, onToken, signal, tools,
     if (!stream) {
       const data = await res.json();
       const msg = data?.choices?.[0]?.message || {};
-      const content = contentToText(msg.content);
+      const flat = createReasoningFlattener();
+      const content = flat.push(msg.content) + flat.flush();
       if (onToken && content) onToken(content);
       const toolCalls = (msg.tool_calls || []).map((tc, i) => parseToolCall(tc.id || `call_${i}`, tc.function?.name, tc.function?.arguments));
       const rateLimit = extractRateLimitInfo(res.headers);
@@ -273,6 +319,7 @@ async function parseSSE(res, onToken) {
   let buffer = '';
   let full = '';
   let usage = null;
+  const flat = createReasoningFlattener(); // wraps streamed `thinking` chunks in <details>
   // tool_calls stream in fragments keyed by index: id/name arrive once, the
   // JSON `arguments` string is concatenated across deltas.
   const toolAcc = new Map();
@@ -303,7 +350,7 @@ async function parseSSE(res, onToken) {
           try {
             const json = JSON.parse(payload);
             const delta = json?.choices?.[0]?.delta;
-            const piece = contentToText(delta?.content);
+            const piece = flat.push(delta?.content);
             if (piece) {
               full += piece;
               if (onToken) onToken(piece);
@@ -327,13 +374,18 @@ async function parseSSE(res, onToken) {
     }
   } catch (e) {
     if (e.name === 'AbortError') {
-      // Caller treats a partial result as success — return what we have.
+      // Caller treats a partial result as success — return what we have, but
+      // close any reasoning block we were mid-way through so it isn't orphaned.
+      const tail = flat.flush();
+      if (tail) { full += tail; if (onToken) onToken(tail); }
       const rateLimit = extractRateLimitInfo(res.headers);
       return { content: full, toolCalls: finalize(), usage, aborted: true, rateLimit };
     }
     throw apiError(`Stream error: ${e.message}`, 'network');
   }
 
+  const tail = flat.flush(); // close a block left open if the stream ended mid-thought
+  if (tail) { full += tail; if (onToken) onToken(tail); }
   const rateLimit = extractRateLimitInfo(res.headers);
   return { content: full, toolCalls: finalize(), usage, rateLimit };
 }
