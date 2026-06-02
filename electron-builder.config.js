@@ -2,7 +2,7 @@
 // Structured so electron-updater can be wired up later via the `publish` block.
 module.exports = {
   appId: "ai.mistral.desktop",
-  productName: "Mist Desktop",
+  productName: "Mistral Desktop",
   copyright: "Copyright © 2026 Mist Desktop",
   // Ship only what the runtime needs.
   files: [
@@ -47,10 +47,10 @@ module.exports = {
     artifactName: "${productName}-${version}-portable.${ext}"
   },
   // Auto-updater target. Stubbed here — fill in a real provider when publishing.
-  publish: [
-    {
-      provider: "generic",
-      url: "https://example.com/mistral-cli/updates/"
-    }
-  ]
+  // publish: [
+  //   {
+  //     provider: "generic",
+  //     url: "https://example.com/mistral-cli/updates/"
+  //   }
+  // ]
 };
