@@ -402,11 +402,19 @@ async function drawInterface(pane, settings) {
       <div class="set-h">${t('Interface', locale)}</div>
       <div class="set-sub">${t('Appearance & layout', locale)}</div>
 
-      <div class="setrow">
+      <div class="setrow align-top">
         <div class="setlbl"><div class="l1">${t('Theme', locale)}</div><div class="l2">${t('Applies immediately', locale)}</div></div>
-        <div class="seg-group" id="theme">
-          ${[['dark', t('Dark', locale)], ['oled', 'OLED'], ['dim', t('Dim', locale)], ['solarized-light', 'Solarized'], ['gruvbox', 'Gruvbox'], ['nord', 'Nord']].map(([v, l]) =>
-            `<button class="seg ${settings.theme === v ? 'active' : ''}" data-v="${v}">${l}</button>`).join('')}
+        <div class="theme-groups" id="theme">
+          ${[
+            [t('Dark', locale), [['dark', t('Dark', locale)], ['oled', 'OLED'], ['dim', t('Dim', locale)], ['gruvbox', 'Gruvbox'], ['nord', 'Nord'], ['catppuccin-mocha', 'Mocha'], ['rose-pine', 'Rosé Pine']]],
+            [t('Light', locale), [['textual-light', 'Textual'], ['solarized-light', 'Solarized'], ['rose-pine-dawn', 'Rosé Pine Dawn'], ['catppuccin-latte', 'Latte'], ['atom-one-light', 'One Light']]],
+          ].map(([cat, items]) => `
+            <div class="theme-cat">
+              <div class="theme-cat-lbl lbl">${cat}</div>
+              <div class="seg-group">
+                ${items.map(([v, l]) => `<button class="seg ${settings.theme === v ? 'active' : ''}" data-v="${v}">${l}</button>`).join('')}
+              </div>
+            </div>`).join('')}
         </div>
       </div>
       <div class="setrow">
@@ -421,10 +429,6 @@ async function drawInterface(pane, settings) {
         <div class="setlbl"><div class="l1">${t('Font size', locale)}</div></div>
         <div class="setctl" style="max-width:260px"></div>
       </div>
-      <div class="setrow">
-        <div class="setlbl"><div class="l1">${t('Collapse sidebar', locale)}</div></div>
-        <div class="toggle ${settings.collapseSidebar ? 'on' : ''}" id="tgCollapse"></div>
-      </div>
     </div>`;
 
   bindSeg(pane.querySelector('#theme'), async (v) => {
@@ -434,10 +438,6 @@ async function drawInterface(pane, settings) {
   const langSelect = pane.querySelector('#language');
   langSelect.addEventListener('change', async (e) => {
     await saveSettings({ locale: e.target.value });
-    window.dispatchEvent(new Event('settings-changed'));
-  });
-  bindToggle(pane.querySelector('#tgCollapse'), settings.collapseSidebar, async (v) => {
-    await saveSettings({ collapseSidebar: v });
     window.dispatchEvent(new Event('settings-changed'));
   });
   mountSlider(pane.querySelector('#fsRow .setctl'), settings.fontSize, 12, 18, 1,

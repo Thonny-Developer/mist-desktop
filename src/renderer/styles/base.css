@@ -1,7 +1,6 @@
 /* ============================================================
-   Mistral CLI — base.css
-   Design tokens, reset, typography. Ported 1:1 from the
-   wireframe kit (wf.css), with OLED / Dim theme overrides.
+   Mistral Desktop - base.css
+   Design codes & Themes here by @mistral and @thonny_dev
    ============================================================ */
 
 :root {
@@ -24,6 +23,7 @@
 
   --accent:     #FF8205;
   --accent-dim: #7a4710;
+  --on-accent:  #1a0e00; /* readable text/icon color on top of --accent */
   --ok:         #6fae6f;
   --danger:     #d66a5a;
 
@@ -37,7 +37,7 @@
   --titlebar-h: 38px;
 }
 
-/* OLED — true black, deeper panels */
+/* OLED - true black, deeper panels */
 :root[data-theme="oled"] {
   --bg:      #000000;
   --canvas:  #000000;
@@ -47,7 +47,7 @@
   --line:    #1c1c20;
 }
 
-/* Dim — lifted, lower-contrast */
+/* Dim - lifted, lower-contrast */
 :root[data-theme="dim"] {
   --bg:      #17171a;
   --canvas:  #1c1c20;
@@ -60,7 +60,7 @@
   --ink-2:   #b2b2b9;
 }
 
-/* Solarized Light — warm paper, low-glare light theme */
+/* Solarized Light - warm paper, low-glare light theme */
 :root[data-theme="solarized-light"] {
   --bg:          #fdf6e3;
   --canvas:      #eee8d5;
@@ -81,11 +81,12 @@
 
   --accent:     #cb4b16;
   --accent-dim: #e6b89c;
+  --on-accent:  #fdf6e3;
   --ok:         #859900;
   --danger:     #dc322f;
 }
 
-/* Gruvbox — retro warm dark */
+/* Gruvbox - retro warm dark */
 :root[data-theme="gruvbox"] {
   --bg:          #1d2021;
   --canvas:      #282828;
@@ -110,7 +111,7 @@
   --danger:     #fb4934;
 }
 
-/* Nord — cool arctic dark */
+/* Nord - cool arctic dark */
 :root[data-theme="nord"] {
   --bg:          #2e3440;
   --canvas:      #323846;
@@ -133,6 +134,159 @@
   --accent-dim: #3f5560;
   --ok:         #a3be8c;
   --danger:     #bf616a;
+}
+
+/* Catppuccin Mocha - soft pastel dark */
+:root[data-theme="catppuccin-mocha"] {
+  --bg:          #181825;
+  --canvas:      #1e1e2e;
+  --panel:       #1e1e2e;
+  --panel-2:     #313244;
+  --panel-3:     #45475a;
+  --line:        #313244;
+  --line-2:      #45475a;
+  --line-strong: #585b70;
+
+  --ink:    #cdd6f4;
+  --ink-2:  #bac2de;
+  --ink-3:  #a6adc8;
+  --ink-4:  #6c7086;
+
+  --skel:   #313244;
+  --skel-2: #45475a;
+
+  --accent:     #cba6f7;
+  --accent-dim: #564f6f;
+  --ok:         #a6e3a1;
+  --danger:     #f38ba8;
+}
+
+/* Rosé Pine - muted pastel dark, rose accent */
+:root[data-theme="rose-pine"] {
+  --bg:          #191724;
+  --canvas:      #1f1d2e;
+  --panel:       #1f1d2e;
+  --panel-2:     #26233a;
+  --panel-3:     #2a273f;
+  --line:        #26233a;
+  --line-2:      #403d52;
+  --line-strong: #524f67;
+
+  --ink:    #e0def4;
+  --ink-2:  #908caa;
+  --ink-3:  #6e6a86;
+  --ink-4:  #524f67;
+
+  --skel:   #26233a;
+  --skel-2: #403d52;
+
+  --accent:     #ebbcba;
+  --accent-dim: #5b4a4d;
+  --ok:         #9ccfd8;
+  --danger:     #eb6f92;
+}
+
+/* Textual Light - clean neutral paper, brand orange accent */
+:root[data-theme="textual-light"] {
+  --bg:          #ffffff;
+  --canvas:      #f7f7f8;
+  --panel:       #f7f7f8;
+  --panel-2:     #f0f0f2;
+  --panel-3:     #e8e8ea;
+  --line:        #e2e2e4;
+  --line-2:      #d2d2d6;
+  --line-strong: #bcbcc0;
+
+  --ink:    #1f1f23;
+  --ink-2:  #55555c;
+  --ink-3:  #82828a;
+  --ink-4:  #aeaeb4;
+
+  --skel:   #f0f0f2;
+  --skel-2: #e8e8ea;
+
+  --accent:     #FF8205;
+  --accent-dim: #f5c48f;
+  --ok:         #2e9e5b;
+  --danger:     #d64a3c;
+}
+
+/* Rosé Pine Dawn - soft muted light, rose accent */
+:root[data-theme="rose-pine-dawn"] {
+  --bg:          #faf4ed;
+  --canvas:      #fffaf3;
+  --panel:       #fffaf3;
+  --panel-2:     #f2e9e1;
+  --panel-3:     #f4ede8;
+  --line:        #dfdad9;
+  --line-2:      #cecacd;
+  --line-strong: #b8b3b5;
+
+  --ink:    #575279;
+  --ink-2:  #797593;
+  --ink-3:  #9893a5;
+  --ink-4:  #b3aebd;
+
+  --skel:   #f2e9e1;
+  --skel-2: #dfdad9;
+
+  --accent:     #d7827e;
+  --accent-dim: #ecd0ce;
+  --on-accent:  #fffaf3;
+  --ok:         #56949f;
+  --danger:     #b4637a;
+}
+
+/* Catppuccin Latte - soft pastel light */
+:root[data-theme="catppuccin-latte"] {
+  --bg:          #eff1f5;
+  --canvas:      #e6e9ef;
+  --panel:       #e6e9ef;
+  --panel-2:     #dce0e8;
+  --panel-3:     #ccd0da;
+  --line:        #ccd0da;
+  --line-2:      #bcc0cc;
+  --line-strong: #acb0be;
+
+  --ink:    #4c4f69;
+  --ink-2:  #5c5f77;
+  --ink-3:  #6c6f85;
+  --ink-4:  #9ca0b0;
+
+  --skel:   #dce0e8;
+  --skel-2: #ccd0da;
+
+  --accent:     #8839ef;
+  --accent-dim: #d3bdf5;
+  --on-accent:  #ffffff;
+  --ok:         #40a02b;
+  --danger:     #d20f39;
+}
+
+/* Atom One Light - crisp neutral light, blue accent */
+:root[data-theme="atom-one-light"] {
+  --bg:          #fafafa;
+  --canvas:      #f0f0f0;
+  --panel:       #f0f0f0;
+  --panel-2:     #ebebeb;
+  --panel-3:     #e5e5e6;
+  --line:        #dbdbdc;
+  --line-2:      #c8c8c9;
+  --line-strong: #b0b0b1;
+
+  --ink:    #383a42;
+  --ink-2:  #696c77;
+  --ink-3:  #a0a1a7;
+  --ink-4:  #b8b9bd;
+
+  --skel:   #ebebeb;
+  --skel-2: #e5e5e6;
+
+  --accent:     #4078f2;
+  --accent-dim: #b9cdf9;
+  --on-accent:  #ffffff;
+  --ok:         #50a14f;
+  --danger:     #e45649;
 }
 
 * { box-sizing: border-box; }
@@ -174,7 +328,7 @@ a:hover { text-decoration: underline; }
 
 hr.hr { height: 1px; background: var(--line); border: 0; margin: 0; }
 
-/* custom scrollbars — thin, dark, theme-matched */
+/* custom scrollbars - thin, dark, theme-matched */
 .scroll { overflow-y: auto; }
 ::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 10px; border: 2px solid var(--panel); }

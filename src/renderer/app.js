@@ -46,7 +46,8 @@ const els = {
   body: document.getElementById('body'),
   nav: document.getElementById('nav'),
   content: document.getElementById('content'),
-  winTitle: document.getElementById('winTitle')
+  winTitle: document.getElementById('winTitle'),
+  back: document.getElementById('tbBack')
 };
 
 let current = null;       // { name, instance }
@@ -78,6 +79,13 @@ async function navigate(name, params = {}) {
   const ctx = { navigate, getSettings, refreshNav: renderNav, openPalette, toggleSidebar };
   current = { name, instance: page.mod };
   els.winTitle.textContent = t(page.labelKey, locale);
+  // The nav rail only belongs on the home (chat) page. On the standalone
+  // pages (Settings/History/About) hide it and surface a titlebar "back"
+  // button so the user can return to the chat.
+  const standalone = name !== 'chat';
+  els.body.classList.toggle('no-nav', standalone);
+  els.back.hidden = !standalone;
+  els.back.querySelector('.lbl').textContent = t('Chat', locale);
   setActiveNav(name);
 
   try {
@@ -255,6 +263,7 @@ function wireWindowControls() {
   document.getElementById('winMin').addEventListener('click', () => api.window.minimize());
   document.getElementById('winMax').addEventListener('click', () => api.window.maximizeToggle());
   document.getElementById('winClose').addEventListener('click', () => api.window.close());
+  els.back.addEventListener('click', () => navigate('chat'));
 }
 
 /* ---------------- command palette (Ctrl+K) ---------------- */

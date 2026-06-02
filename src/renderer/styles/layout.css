@@ -22,6 +22,27 @@
   border-bottom: 1px solid var(--line);
   -webkit-app-region: drag; /* the whole bar drags the window */
 }
+/* "back to chat" button (shown only on standalone pages) */
+.tb-back {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 10px 0 7px;
+  margin-right: 4px;
+  background: transparent;
+  border: 1px solid var(--line-2);
+  border-radius: 7px;
+  color: var(--ink-2);
+  font-size: 11.5px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.tb-back[hidden] { display: none; }
+.tb-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+.tb-back:hover { background: var(--panel-3); color: var(--ink); border-color: var(--line-strong); }
+
 .titlebar .win-title {
   font-family: var(--mono);
   font-size: 11.5px;
@@ -57,6 +78,11 @@
   transition: grid-template-columns .15s ease;
 }
 .body.collapsed { grid-template-columns: 60px 1fr; }
+/* Standalone pages (Settings/History/About): drop the nav rail entirely.
+   Use a single column so the hidden nav doesn't shift content into a 0-width
+   track (a display:none grid item is removed from the layout). */
+.body.no-nav { grid-template-columns: 1fr; }
+.body.no-nav .nav { display: none; }
 
 /* ---------- nav rail (the canonical "labeled rail") ---------- */
 .nav {

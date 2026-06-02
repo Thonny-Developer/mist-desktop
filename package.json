@@ -1,7 +1,7 @@
 {
   "name": "mistral-desktop",
   "productName": "Mistral Desktop",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Desktop application for Mistral, the open-source LLM by Thonny Developer",
   "author": {
     "name": "thonny_dev",

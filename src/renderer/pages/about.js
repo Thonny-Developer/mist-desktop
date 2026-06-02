@@ -73,18 +73,37 @@ async function render(container) {
 async function pingStatus(container, settings) {
   const el = container.querySelector('#apiStatus');
   const host = (() => { try { return new URL(settings.endpoint).host; } catch { return 'api.mistral.ai'; } })();
+  const ru = (settings.locale || 'ru') === 'ru';
   const hasKey = await api.apiKey.has();
   if (!hasKey) {
-    el.innerHTML = `<span class="streaming err"><span class="pulse"></span>no API key · add one in Settings</span>`;
+    el.innerHTML = `<span class="streaming err"><span class="pulse"></span>${ru ? 'нет API-ключа · добавьте его в настройках' : 'no API key · add one in Settings'}</span>`;
     return;
   }
   try {
     const { latency } = await api.mistral.test();
-    el.innerHTML = `<span class="streaming ok"><span class="pulse"></span>operational</span>
+    el.innerHTML = `<span class="streaming ok"><span class="pulse"></span>${ru ? 'в норме' : 'operational'}</span>
       <span class="mono txt-d" style="font-size:11px;margin-left:10px">· ${escapeHtml(host)} · ${latency}ms</span>`;
   } catch (e) {
-    el.innerHTML = `<span class="streaming err"><span class="pulse"></span>${escapeHtml(e.message || 'unreachable')}</span>`;
+    el.innerHTML = `<span class="streaming err"><span class="pulse"></span>${escapeHtml(friendlyError(e, ru))}</span>`;
   }
+}
+
+/** Map a raw API/IPC error into one short, human-readable line. */
+function friendlyError(e, ru) {
+  const raw = ((e && e.message) || '').toLowerCase();
+  const hit = (...needles) => needles.some((n) => raw.includes(n));
+
+  if (hit('fetch failed', 'network error', 'enotfound', 'econnrefused', 'getaddrinfo', 'dns', 'offline'))
+    return ru ? 'Нет подключения к интернету' : 'No internet connection';
+  if (hit('timeout', 'etimedout', 'timed out'))
+    return ru ? 'Сервер не отвечает' : 'Server not responding';
+  if (hit('401', 'unauthorized', 'invalid api key', 'invalid_api_key', 'authentication'))
+    return ru ? 'Неверный API-ключ' : 'Invalid API key';
+  if (hit('429', 'rate limit', 'too many'))
+    return ru ? 'Слишком много запросов' : 'Too many requests';
+  if (hit('500', '502', '503', '504', 'server error', 'bad gateway'))
+    return ru ? 'Сервис временно недоступен' : 'Service temporarily unavailable';
+  return ru ? 'Не удалось подключиться' : 'Could not connect';
 }
 
 export default { render };

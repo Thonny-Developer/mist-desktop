@@ -18,7 +18,11 @@
   <div class="app">
     <!-- ============ custom titlebar (drag region) ============ -->
     <div class="titlebar" id="titlebar">
-      <span class="win-title">mistral Desktop — <b id="winTitle">Chat</b></span>
+      <button class="tb-back" id="tbBack" title="Back to chat" aria-label="Back to chat" hidden>
+        <svg viewBox="0 0 16 16"><path d="M10 4l-4 4 4 4" /></svg>
+        <span class="lbl">Chat</span>
+      </button>
+      <span class="win-title">Mistral Desktop — <b id="winTitle">Chat</b></span>
       <span class="spacer"></span>
       <span class="tb-hint mono">Ctrl+K</span>
       <div class="win-controls">
