@@ -66,7 +66,7 @@ src/
 ## Установка
 
 Скачай готовую сборку со страницы релизов:
-#### [Последний релиз](https://github.com/Thonny-Developer/mist-desktop/releases/latest)
+#### [Последний релиз](https://github.com/Thonny-Developer/mistral-desktop/releases/latest)
 
 Там лежат установщик и портативная версия. После запуска открой **Настройки** и выбери пункт **API**, вставь ключ Mistral и нажми **Test connection**
 

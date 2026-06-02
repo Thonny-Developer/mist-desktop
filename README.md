@@ -66,7 +66,7 @@ Security: `contextIsolation: true`, `nodeIntegration: false`, a strict CSP. All 
 ## Install
 
 Grab a ready build from the releases page:
-#### [Latest release](https://github.com/Thonny-Developer/mist-desktop/releases/latest)
+#### [Latest release](https://github.com/Thonny-Developer/mistral-desktop/releases/latest)
 
 It ships an installer and a portable version. After launch, open **Settings**, pick **API**, paste your Mistral key and hit **Test connection**
 
